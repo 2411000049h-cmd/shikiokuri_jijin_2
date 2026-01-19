@@ -139,8 +139,8 @@ function draw() {
     const q = questions[curIdx];
     
     document.documentElement.style.setProperty('--accent-color', q.frameColor);
-    document.getElementById("xlb").innerText = q.xL + " ↔ " + q.xR;
-    document.getElementById("ylb").innerText = q.yB + " ↔ " + q.yT;
+    document.getElementById("xlb").innerText = (q.xL || "") + " ↔ " + (q.xR || "");
+    document.getElementById("ylb").innerText = (q.yB || "") + " ↔ " + (q.yT || "");
 
     ctx.clearRect(0,0,400,400);
     
@@ -152,17 +152,18 @@ function draw() {
     ctx.moveTo(200, 50); ctx.lineTo(200, 350); // 縦軸
     ctx.stroke();
 
-    // 内部ラベルの描画
-    ctx.fillStyle = "#888";
-    ctx.font = "12px serif";
+    // --- ここがラベル追記箇所 ---
+    ctx.fillStyle = "#888"; // ラベルの色
+    ctx.font = "bold 12px serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // 四方のラベル
-    ctx.fillText(q.xL, 30, 200);  // 左
-    ctx.fillText(q.xR, 370, 200); // 右
-    ctx.fillText(q.yT, 200, 30);  // 上
-    ctx.fillText(q.yB, 200, 370); // 下
+    // 四方のラベル（軸の外側に配置）
+    ctx.fillText(q.xL || "左端", 25, 200);  // 左
+    ctx.fillText(q.xR || "右端", 375, 200); // 右
+    ctx.fillText(q.yT || "上端", 200, 25);  // 上
+    ctx.fillText(q.yB || "下端", 200, 375); // 下
+    // --------------------------
 
     // 回答データの描画
     (q.answers || []).forEach(a => {
@@ -176,19 +177,19 @@ function draw() {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 名前
         ctx.fillStyle = "#222";
         ctx.font = "10px sans-serif";
         ctx.fillText(a.name, px, py - 12);
     });
 
     // 中央の質問タイトル
-    const tw = ctx.measureText(q.title).width;
+    const titleText = q.title || "";
+    const tw = ctx.measureText(titleText).width;
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     ctx.fillRect(200 - (tw / 2) - 10, 188, tw + 20, 24);
     ctx.fillStyle = "#222";
     ctx.font = "bold 15px serif";
-    ctx.fillText(q.title, 200, 200);
+    ctx.fillText(titleText, 200, 200);
 }
 
 function renderList() {
@@ -302,3 +303,4 @@ document.getElementById("qSelect").onchange = (e) => {
 </script>
 </body>
 </html>
+
