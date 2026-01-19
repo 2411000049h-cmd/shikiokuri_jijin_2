@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四季送り自陣に質問しようサイト</title>
+    <title>自陣に質問しようサイト</title>
     <style>
         :root { --accent-color: #333; --sumi: #333; --bg: #fcfcfc; }
         body { font-family: "Yu Mincho", serif; background: var(--bg); color: #222; margin: 0; padding: 20px; line-height: 1.8; }
@@ -29,7 +29,7 @@
 <div class="container">
     <h1 style="text-align:center; font-weight:normal; letter-spacing:0.3em;">四季送り自陣に質問するサイト</h1>
     
-<h5>バグ他要望等あれば追記・編集いたします!!</h5>
+<h5>不具合他要望あれば編集追記いたします!!</h5>
     
     <div class="section-card">
         <h3>質問の管理</h3>
@@ -57,7 +57,7 @@
     <div class="section-card">
         <h3 id="formTitle">回答する</h3>
         <div style="display:flex; gap:15px;">
-            <input id="uName" placeholder="名前" style="flex:2">
+            <input id="uName" placeholder="お名前" style="flex:2">
             <input type="color" id="uColor" value="#666666" style="flex:1; height:35px;">
         </div>
         <div style="margin-top:20px; background:#fafafa; padding:15px;">
@@ -103,13 +103,8 @@ const ctx = document.getElementById("chart").getContext("2d");
 
 onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-        questions = data;
-        renderUI();
-    } else {
-        questions = [];
-        renderUI();
-    }
+    questions = data || [];
+    renderUI();
 });
 
 function renderUI() {
@@ -142,21 +137,58 @@ function renderUI() {
 function draw() {
     if (!questions[curIdx]) return;
     const q = questions[curIdx];
+    
     document.documentElement.style.setProperty('--accent-color', q.frameColor);
     document.getElementById("xlb").innerText = q.xL + " ↔ " + q.xR;
     document.getElementById("ylb").innerText = q.yB + " ↔ " + q.yT;
+
     ctx.clearRect(0,0,400,400);
-    ctx.strokeStyle = "#eee"; ctx.beginPath();
-    ctx.moveTo(50,200); ctx.lineTo(350,200); ctx.moveTo(200,50); ctx.lineTo(200,350); ctx.stroke();
+    
+    // 軸の描画
+    ctx.strokeStyle = "#ddd"; 
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(50, 200); ctx.lineTo(350, 200); // 横軸
+    ctx.moveTo(200, 50); ctx.lineTo(200, 350); // 縦軸
+    ctx.stroke();
+
+    // 内部ラベルの描画
+    ctx.fillStyle = "#888";
+    ctx.font = "12px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // 四方のラベル
+    ctx.fillText(q.xL, 30, 200);  // 左
+    ctx.fillText(q.xR, 370, 200); // 右
+    ctx.fillText(q.yT, 200, 30);  // 上
+    ctx.fillText(q.yB, 200, 370); // 下
+
+    // 回答データの描画
     (q.answers || []).forEach(a => {
         const px = 50 + (a.x - 1) * (300 / 19);
         const py = 50 + (21 - a.y) * (300 / 19);
-        ctx.fillStyle = a.color; ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#222"; ctx.font = "10px sans-serif"; ctx.textAlign="center"; ctx.fillText(a.name, px, py-12);
+        ctx.fillStyle = a.color;
+        ctx.beginPath();
+        ctx.arc(px, py, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 名前
+        ctx.fillStyle = "#222";
+        ctx.font = "10px sans-serif";
+        ctx.fillText(a.name, px, py - 12);
     });
+
+    // 中央の質問タイトル
     const tw = ctx.measureText(q.title).width;
-    ctx.fillStyle = "#fff"; ctx.fillRect(200-(tw/2)-10, 188, tw+20, 24);
-    ctx.fillStyle = "#222"; ctx.font = "bold 15px serif"; ctx.textAlign="center"; ctx.fillText(q.title, 200, 200);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillRect(200 - (tw / 2) - 10, 188, tw + 20, 24);
+    ctx.fillStyle = "#222";
+    ctx.font = "bold 15px serif";
+    ctx.fillText(q.title, 200, 200);
 }
 
 function renderList() {
@@ -178,7 +210,6 @@ function renderList() {
     });
 }
 
-// 質問の追加
 document.getElementById("addQ").onclick = () => {
     const newQ = {
         title: document.getElementById("qTitle").value,
@@ -191,7 +222,6 @@ document.getElementById("addQ").onclick = () => {
     set(dbRef, questions);
 };
 
-// 質問の更新
 document.getElementById("updateQ").onclick = () => {
     if (questions.length === 0) return;
     questions[curIdx].title = document.getElementById("qTitle").value;
@@ -201,21 +231,19 @@ document.getElementById("updateQ").onclick = () => {
     questions[curIdx].yB = document.getElementById("yB").value;
     questions[curIdx].yT = document.getElementById("yT").value;
     set(dbRef, questions);
-    alert("質問の内容を更新しました");
+    alert("更新しました");
 };
 
-// 質問の削除
 document.getElementById("deleteQ").onclick = () => {
     if (questions.length === 0) return;
-    if (!confirm(`質問「${questions[curIdx].title}」を削除しますか？\nこの質問に紐づく全員の回答も消去されます。`)) return;
+    if (!confirm(`質問を削除しますか？`)) return;
     questions.splice(curIdx, 1);
     set(dbRef, questions);
 };
 
-// 回答の送信
 document.getElementById("sendAns").onclick = () => {
     const name = document.getElementById("uName").value.trim();
-    if (!name || questions.length === 0) return alert("名前を入力するか、質問を追加してください");
+    if (!name || questions.length === 0) return alert("名前を入力してください");
     if (!questions[curIdx].answers) questions[curIdx].answers = [];
     
     const newAns = {
@@ -248,7 +276,7 @@ window.editAns = (i) => {
 };
 
 window.deleteAns = (i) => {
-    if (!confirm("この回答を消去しますか？")) return;
+    if (!confirm("削除しますか？")) return;
     questions[curIdx].answers.splice(i, 1);
     set(dbRef, questions);
 };
