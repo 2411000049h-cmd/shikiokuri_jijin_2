@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四季送り自陣に質問できるサイト</title>
+    <title>四季送り自陣に質問しようサイト</title>
     <style>
         :root { --accent-color: #333; --sumi: #333; --bg: #fcfcfc; }
         body { font-family: "Yu Mincho", serif; background: var(--bg); color: #222; margin: 0; padding: 20px; line-height: 1.8; }
@@ -20,13 +20,17 @@
         input[type="range"] { -webkit-appearance: none; width: 100%; height: 1px; background: #ddd; margin: 25px 0; outline: none; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #fff; border: 1px solid #222; border-radius: 50%; cursor: pointer; }
         .ans-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #ccc; font-size: 0.9rem; }
+        .danger-btn { color: #d93025; border-color: #d93025; }
+        .danger-btn:hover { background: #d93025; color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align:center; font-weight:normal; letter-spacing:0.3em;">四季送り自陣質問しようサイト</h1>
-
+    <h1 style="text-align:center; font-weight:normal; letter-spacing:0.3em;">四季送り自陣に質問するサイト</h1>
+    
+<h5>バグ他要望等あれば追記・編集いたします!!</h5>
+    
     <div class="section-card">
         <h3>質問の管理</h3>
         <input id="qTitle" value="お酒は？">
@@ -38,18 +42,22 @@
         <div style="display:flex; gap:10px;">
             <input id="yB" value="弱い"> <input id="yT" value="強い">
         </div>
-        <button id="addQ" style="width:100%; margin-top:15px;">質問を追加/更新</button>
+        <div style="margin-top:15px; display: flex; flex-wrap: wrap; gap: 5px;">
+            <button id="addQ" style="flex: 1;">新規質問を追加</button>
+            <button id="updateQ" style="flex: 1;">選択中の質問を更新</button>
+            <button id="deleteQ" class="danger-btn" style="flex: 1;">質問を消去</button>
+        </div>
     </div>
 
     <div class="section-card">
-        <label>表示中の質問：</label>
+        <label>表示中の質問を選択：</label>
         <select id="qSelect"></select>
     </div>
 
     <div class="section-card">
         <h3 id="formTitle">回答する</h3>
         <div style="display:flex; gap:15px;">
-            <input id="uName" placeholder="お名前" style="flex:2">
+            <input id="uName" placeholder="名前" style="flex:2">
             <input type="color" id="uColor" value="#666666" style="flex:1; height:35px;">
         </div>
         <div style="margin-top:20px; background:#fafafa; padding:15px;">
@@ -57,7 +65,7 @@
             <input type="range" min="1" max="20" id="valX">
             <p id="ylb" style="text-align:center; font-size:0.8rem; font-weight:bold; margin:0;"></p>
             <input type="range" min="1" max="20" id="valY">
-            <button id="sendAns" class="btn-submit">回答を保存する</button>
+            <button id="sendAns" class="btn-submit">回答を送信/上書き</button>
             <button id="cancelEdit" style="display:none; width:100%; margin-top:5px; border-color:#ccc; color:#888;">編集をキャンセル</button>
         </div>
     </div>
@@ -90,13 +98,16 @@ const dbRef = ref(db, 'shiki_v3');
 
 let questions = [];
 let curIdx = 0;
-let editingAnsIdx = null; // 編集中の回答インデックス
+let editingAnsIdx = null;
 const ctx = document.getElementById("chart").getContext("2d");
 
 onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
     if (data) {
         questions = data;
+        renderUI();
+    } else {
+        questions = [];
         renderUI();
     }
 });
@@ -105,13 +116,25 @@ function renderUI() {
     const sel = document.getElementById("qSelect");
     const lastVal = sel.value;
     sel.innerHTML = "";
+    
+    if (questions.length === 0) {
+        ctx.clearRect(0,0,400,400);
+        document.getElementById("ansList").innerHTML = "質問がありません。追加してください。";
+        return;
+    }
+
     questions.forEach((q, i) => {
         const opt = document.createElement("option");
         opt.value = i; opt.text = q.title;
         sel.appendChild(opt);
     });
-    if (lastVal !== "" && questions[lastVal]) sel.value = lastVal;
-    curIdx = sel.value || 0;
+
+    if (lastVal !== "" && questions[lastVal]) {
+        sel.value = lastVal;
+    } else {
+        sel.value = 0;
+    }
+    curIdx = Number(sel.value);
     draw();
     renderList();
 }
@@ -139,33 +162,60 @@ function draw() {
 function renderList() {
     const list = document.getElementById("ansList");
     list.innerHTML = "";
-    if (!questions[curIdx] || !questions[curIdx].answers) return;
+    if (!questions[curIdx] || !questions[curIdx].answers || questions[curIdx].answers.length === 0) {
+        list.innerHTML = "まだ回答がありません。";
+        return;
+    }
     questions[curIdx].answers.forEach((a, i) => {
         const div = document.createElement("div");
         div.className = "ans-item";
         div.innerHTML = `<span><b style="color:${a.color}">●</b> ${a.name}</span>
             <div>
                 <button onclick="window.editAns(${i})">編集</button>
-                <button onclick="window.deleteAns(${i})" style="color:red; border-color:red;">消去</button>
+                <button onclick="window.deleteAns(${i})" class="danger-btn">消去</button>
             </div>`;
         list.appendChild(div);
     });
 }
 
+// 質問の追加
 document.getElementById("addQ").onclick = () => {
-    questions.push({
+    const newQ = {
         title: document.getElementById("qTitle").value,
         frameColor: document.getElementById("fColor").value,
         xL: document.getElementById("xL").value, xR: document.getElementById("xR").value,
         yB: document.getElementById("yB").value, yT: document.getElementById("yT").value,
         answers: []
-    });
+    };
+    questions.push(newQ);
     set(dbRef, questions);
 };
 
+// 質問の更新
+document.getElementById("updateQ").onclick = () => {
+    if (questions.length === 0) return;
+    questions[curIdx].title = document.getElementById("qTitle").value;
+    questions[curIdx].frameColor = document.getElementById("fColor").value;
+    questions[curIdx].xL = document.getElementById("xL").value;
+    questions[curIdx].xR = document.getElementById("xR").value;
+    questions[curIdx].yB = document.getElementById("yB").value;
+    questions[curIdx].yT = document.getElementById("yT").value;
+    set(dbRef, questions);
+    alert("質問の内容を更新しました");
+};
+
+// 質問の削除
+document.getElementById("deleteQ").onclick = () => {
+    if (questions.length === 0) return;
+    if (!confirm(`質問「${questions[curIdx].title}」を削除しますか？\nこの質問に紐づく全員の回答も消去されます。`)) return;
+    questions.splice(curIdx, 1);
+    set(dbRef, questions);
+};
+
+// 回答の送信
 document.getElementById("sendAns").onclick = () => {
     const name = document.getElementById("uName").value.trim();
-    if (!name || curIdx < 0) return alert("名前を入力してください");
+    if (!name || questions.length === 0) return alert("名前を入力するか、質問を追加してください");
     if (!questions[curIdx].answers) questions[curIdx].answers = [];
     
     const newAns = {
@@ -207,11 +257,20 @@ document.getElementById("cancelEdit").onclick = () => {
     editingAnsIdx = null;
     document.getElementById("formTitle").innerText = "回答する";
     document.getElementById("cancelEdit").style.display = "none";
-    document.getElementById("uName").value = "";
 };
 
-document.getElementById("qSelect").onchange = (e) => { curIdx = Number(e.target.value); draw(); renderList(); };
+document.getElementById("qSelect").onchange = (e) => {
+    curIdx = Number(e.target.value);
+    const q = questions[curIdx];
+    document.getElementById("qTitle").value = q.title;
+    document.getElementById("fColor").value = q.frameColor;
+    document.getElementById("xL").value = q.xL;
+    document.getElementById("xR").value = q.xR;
+    document.getElementById("yB").value = q.yB;
+    document.getElementById("yT").value = q.yT;
+    draw();
+    renderList();
+};
 </script>
 </body>
 </html>
-
