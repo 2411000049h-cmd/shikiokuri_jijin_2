@@ -3,83 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四季送り自陣に質問するサイト</title>
+    <title>四季送り自陣に質問しようサイト</title>
     <style>
-        :root { --main: #222; --sub: #f0f0f0; }
-        body { font-family: "Yu Mincho", serif; background: #fafafa; color: var(--main); margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
+        :root { --main: #222; --bg: #fcfcfc; }
+        body { font-family: "Yu Mincho", serif; background: var(--bg); color: var(--main); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 700px; margin: 0 auto; }
         
-        /* 管理・回答エリア（固定） */
-        .sticky-panel { background: #fff; border: 2px solid var(--main); padding: 20px; margin-bottom: 40px; position: sticky; top: 10px; z-index: 100; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 600px) { .panel-grid { grid-template-columns: 1fr; } }
-        
-        h2, h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; font-size: 1.1rem; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box; }
-        
-        button { cursor: pointer; padding: 10px; border: 1px solid var(--main); background: #fff; transition: 0.2s; }
+        /* 質問作成エリア */
+        .admin-panel { background: #fff; border: 2px solid var(--main); padding: 20px; margin-bottom: 50px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; box-sizing: border-box; font-family: inherit; }
+        button { cursor: pointer; border: 1px solid var(--main); background: #fff; transition: 0.2s; font-family: inherit; }
         button:hover { background: var(--main); color: #fff; }
-        .btn-main { background: var(--main); color: #fff; width: 100%; font-weight: bold; }
-        
-        /* チャート一覧エリア */
-        .chart-list-title { text-align: center; border-top: 3px double #333; padding-top: 40px; margin-top: 40px; letter-spacing: 0.5em; }
-        .q-card { background: #fff; border: 1px solid #ddd; padding: 20px; margin-bottom: 50px; text-align: center; }
-        .chart-container { position: relative; width: 500px; height: 500px; margin: 20px auto; background: #fff; border: 5px solid var(--border-color, #333); }
-        @media (max-width: 550px) { .chart-container { width: 320px; height: 320px; } }
-        canvas { width: 100%; height: 100%; }
+        .btn-add { width: 100%; padding: 15px; font-weight: bold; font-size: 1rem; }
 
-        /* 画像アップロード関連 */
-        .img-preview { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; display: block; margin: 10px 0; }
-        .danger { color: #d93025; border-color: #d93025; font-size: 0.7rem; margin-top: 5px; }
+        /* 質問カード（これがどんどん増える） */
+        .q-card { background: #fff; border: 1px solid #ddd; padding: 25px; margin-bottom: 60px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .q-title { text-align: center; font-size: 1.4rem; margin-bottom: 20px; border-bottom: 2px solid var(--main); display: inline-block; width: 100%; }
+        
+        /* チャートエリア */
+        .chart-box { position: relative; width: 450px; height: 450px; margin: 0 auto 30px; background: #fff; border: 8px solid var(--f-color); }
+        @media (max-width: 500px) { .chart-box { width: 300px; height: 300px; } }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* 回答フォームエリア */
+        .ans-form { background: #f9f9f9; padding: 20px; border-top: 1px solid #eee; }
+        .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .range-box { text-align: center; font-size: 0.8rem; font-weight: bold; }
+        .danger-text { color: red; cursor: pointer; font-size: 0.7rem; text-decoration: underline; margin-top: 10px; display: block; text-align: right; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align:center;">質問管理</h1>
+    <h1 style="text-align:center; letter-spacing: 0.2em;">四季送り自陣 質問板</h1>
 
-    <div class="sticky-panel">
-        <div class="panel-grid">
-            <div>
-                <h3>1. 新しい質問を作る</h3>
-                <input id="qTitle" placeholder="例：お酒は好き？">
-                <div style="display:flex; gap:5px;">
-                    <input id="xL" placeholder="左（嫌い）" style="flex:1">
-                    <input id="xR" placeholder="右（好き）" style="flex:1">
-                </div>
-                <div style="display:flex; gap:5px;">
-                    <input id="yB" placeholder="下（弱い）" style="flex:1">
-                    <input id="yT" placeholder="上（強い）" style="flex:1">
-                </div>
-                <input type="color" id="fColor" value="#333333" title="フレームの色">
-                <button id="addQ" class="btn-main">この質問を追加して公開</button>
-            </div>
-
-            <div>
-                <h3>2. 選んで回答する</h3>
-                <select id="qSelect"></select>
-                <div style="display:flex; gap:10px; align-items: center;">
-                    <input id="uName" placeholder="自分の名前" style="flex:2">
-                    <input type="color" id="uColor" value="#666666" style="flex:1" title="アイコン色">
-                </div>
-                
-                <label style="font-size:0.7rem;">画像を使う(丸く切り抜かれます):</label>
-                <input type="file" id="uImg" accept="image/*">
-                <img id="preview" class="img-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
-                
-                <div style="font-size:0.8rem; background:#f9f9f9; padding:10px; border:1px solid #eee;">
-                    X軸: <input type="range" id="valX" min="1" max="100" value="50">
-                    Y軸: <input type="range" id="valY" min="1" max="100" value="50">
-                    ｻｲｽﾞ: <input type="range" id="valSize" min="20" max="80" value="50">
-                </div>
-                <button id="sendAns" class="btn-main" style="margin-top:10px;">チャートに反映</button>
-                <button id="delQ" class="danger">選択中の質問自体を消す</button>
-            </div>
+    <div class="admin-panel">
+        <h3>新しい質問を作成</h3>
+        <input id="new_title" placeholder="質問内容（例：お酒の強さと好き度）" style="margin-bottom:15px;">
+        <div class="input-row">
+            <input id="new_xL" placeholder="左（嫌い）">
+            <input id="new_xR" placeholder="右（好き）">
         </div>
+        <div class="input-row">
+            <input id="new_yB" placeholder="下（弱い）">
+            <input id="new_yT" placeholder="上（強い）">
+        </div>
+        <input type="color" id="new_fColor" value="#333333" style="height:40px; cursor:pointer;">
+        <button id="addQBtn" class="btn-add" style="margin-top:10px;">質問を追加する</button>
     </div>
 
-    <h2 class="chart-list-title">CHARTS</h2>
-    <div id="chartList"></div>
+    <hr style="margin: 50px 0; border: none; border-top: 3px double #333;">
+
+    <div id="qContainer"></div>
 </div>
 
 <script type="module">
@@ -98,149 +74,138 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const dbRef = ref(db, 'shiki_v4'); // 互換性のためにバージョンを上げる
+const dbRef = ref(db, 'shiki_v5'); // データ形式刷新
 
 let questions = [];
-let userImageData = null;
+let localImageData = null;
 
-// 画像の処理
-document.getElementById('uImg').onchange = (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
+// 画像の読み込み
+window.handleFile = (input) => {
+    const file = input.files[0];
     const reader = new FileReader();
-    reader.onload = (event) => {
-        userImageData = event.target.result; // Base64
-        document.getElementById('preview').src = userImageData;
-    };
+    reader.onload = (e) => { localImageData = e.target.result; };
     reader.readAsDataURL(file);
 };
 
 onValue(dbRef, (snapshot) => {
     questions = snapshot.val() || [];
-    updateUI();
+    renderCards();
 });
 
-function updateUI() {
-    const sel = document.getElementById("qSelect");
-    const container = document.getElementById("chartList");
-    const curSel = sel.value;
-    
-    sel.innerHTML = "";
+function renderCards() {
+    const container = document.getElementById("qContainer");
     container.innerHTML = "";
 
-    questions.forEach((q, i) => {
-        // セレクトボックス更新
-        const opt = document.createElement("option");
-        opt.value = i; opt.text = q.title;
-        sel.appendChild(opt);
-
-        // チャートカード作成
+    questions.forEach((q, qIdx) => {
         const card = document.createElement("div");
         card.className = "q-card";
-        card.innerHTML = `<h3>${q.title}</h3>
-            <div class="chart-container" style="--border-color: ${q.frameColor}">
-                <canvas id="canvas-${i}" width="500" height="500"></canvas>
-            </div>`;
+        card.innerHTML = `
+            <div class="q-title">${q.title}</div>
+            <div class="chart-box" style="--f-color: ${q.frameColor}">
+                <canvas id="can-${qIdx}" width="450" height="450"></canvas>
+            </div>
+            <div class="ans-form">
+                <div class="ans-grid">
+                    <input id="name-${qIdx}" placeholder="お名前">
+                    <input type="file" onchange="handleFile(this)" accept="image/*">
+                </div>
+                <div class="range-box">
+                    <div>${q.xL} ← (横) → ${q.xR}</div>
+                    <input type="range" id="x-${qIdx}" min="1" max="100" value="50">
+                    <div style="margin-top:10px;">${q.yB} ← (縦) → ${q.yT}</div>
+                    <input type="range" id="y-${qIdx}" min="1" max="100" value="50">
+                </div>
+                <button onclick="sendAnswer(${qIdx})" style="width:100%; margin-top:15px; padding:10px; background:#222; color:#fff;">この質問に回答する</button>
+                <span class="danger-text" onclick="deleteQuestion(${qIdx})">この質問カードを削除する</span>
+            </div>
+        `;
         container.appendChild(card);
-        drawChart(i);
+        drawChart(qIdx);
     });
-    if(questions[curSel]) sel.value = curSel;
 }
 
 async function drawChart(idx) {
     const q = questions[idx];
-    const canvas = document.getElementById(`canvas-${idx}`);
-    if(!canvas) return;
+    const canvas = document.getElementById(`can-${idx}`);
     const ctx = canvas.getContext("2d");
-    
-    ctx.clearRect(0,0,500,500);
-    
+    ctx.clearRect(0,0,450,450);
+
     // 軸
-    ctx.strokeStyle = "#ccc";
-    ctx.beginPath(); ctx.moveTo(50,250); ctx.lineTo(450,250); ctx.moveTo(250,50); ctx.lineTo(250,450); ctx.stroke();
-    
-    // ラベル
-    ctx.fillStyle = "#999"; ctx.font = "14px serif"; ctx.textAlign="center";
-    ctx.fillText(q.xL, 30, 255); ctx.fillText(q.xR, 470, 255);
-    ctx.fillText(q.yT, 250, 30); ctx.fillText(q.yB, 250, 480);
+    ctx.strokeStyle = "#eee"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(50,225); ctx.lineTo(400,225); ctx.moveTo(225,50); ctx.lineTo(225,400); ctx.stroke();
+
+    // 項目名（好き・嫌いなど）
+    ctx.fillStyle = "#888"; ctx.font = "bold 13px serif"; ctx.textAlign="center";
+    ctx.fillText(q.xL, 25, 225); ctx.fillText(q.xR, 425, 225);
+    ctx.fillText(q.yT, 225, 25); ctx.fillText(q.yB, 225, 435);
 
     if(!q.answers) return;
+    for(const a of q.answers) {
+        const px = 50 + (a.x / 100) * 350;
+        const py = 50 + ((100 - a.y) / 100) * 350;
+        const size = 60; // 固定の大きなサイズ
 
-    for (const a of q.answers) {
-        const px = 50 + (a.x / 100) * 400;
-        const py = 50 + ( (100 - a.y) / 100) * 400;
-        const size = a.size || 50;
-
-        if (a.img) {
+        if(a.img) {
             const img = new Image();
             img.src = a.img;
             await new Promise(r => img.onload = r);
-            
             ctx.save();
-            ctx.beginPath();
-            ctx.arc(px, py, size/2, 0, Math.PI*2);
-            ctx.clip();
+            ctx.beginPath(); ctx.arc(px, py, size/2, 0, Math.PI*2); ctx.clip();
             ctx.drawImage(img, px - size/2, py - size/2, size, size);
             ctx.restore();
-            // 枠
-            ctx.strokeStyle = a.color; ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.arc(px, py, size/2, 0, Math.PI*2); ctx.stroke();
+            ctx.strokeStyle = "#333"; ctx.lineWidth = 2; ctx.stroke();
         } else {
-            ctx.fillStyle = a.color;
-            ctx.beginPath(); ctx.arc(px, py, size/4, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI*2); ctx.fill();
         }
-        
-        ctx.fillStyle = "#222"; ctx.font = "bold 12px sans-serif";
-        ctx.fillText(a.name, px, py + (size/2) + 15);
+        ctx.fillStyle = "#000"; ctx.font = "bold 11px sans-serif";
+        ctx.fillText(a.name, px, py + (size/2) + 12);
     }
 }
 
 // 質問追加
-document.getElementById("addQ").onclick = () => {
-    const title = document.getElementById("qTitle").value;
+document.getElementById("addQBtn").onclick = () => {
+    const title = document.getElementById("new_title").value;
     if(!title) return;
     questions.push({
-        title, frameColor: document.getElementById("fColor").value,
-        xL: document.getElementById("xL").value || "左",
-        xR: document.getElementById("xR").value || "右",
-        yT: document.getElementById("yT").value || "上",
-        yB: document.getElementById("yB").value || "下",
+        title, frameColor: document.getElementById("new_fColor").value,
+        xL: document.getElementById("new_xL").value || "左",
+        xR: document.getElementById("new_xR").value || "右",
+        yT: document.getElementById("new_yT").value || "上",
+        yB: document.getElementById("new_yB").value || "下",
         answers: []
     });
     set(dbRef, questions);
+    document.getElementById("new_title").value = "";
 };
 
 // 回答送信
-document.getElementById("sendAns").onclick = () => {
-    const idx = document.getElementById("qSelect").value;
-    const name = document.getElementById("uName").value;
-    if(!name || idx === "") return alert("名前と質問を選んでください");
-
-    if(!questions[idx].answers) questions[idx].answers = [];
+window.sendAnswer = (idx) => {
+    const name = document.getElementById(`name-${idx}`).value;
+    if(!name) return alert("お名前を入力してください");
     
-    // 同名がいれば上書き、いなければ新規
+    if(!questions[idx].answers) questions[idx].answers = [];
     const existing = questions[idx].answers.findIndex(a => a.name === name);
+    
     const data = {
-        name, 
-        color: document.getElementById("uColor").value,
-        x: Number(document.getElementById("valX").value),
-        y: Number(document.getElementById("valY").value),
-        size: Number(document.getElementById("valSize").value),
-        img: userImageData // 画像データ（なければnull）
+        name,
+        x: Number(document.getElementById(`x-${idx}`).value),
+        y: Number(document.getElementById(`y-${idx}`).value),
+        img: localImageData
     };
 
     if(existing > -1) questions[idx].answers[existing] = data;
     else questions[idx].answers.push(data);
-
+    
     set(dbRef, questions);
+    localImageData = null; // リセット
 };
 
 // 質問削除
-document.getElementById("delQ").onclick = () => {
-    const idx = document.getElementById("qSelect").value;
-    if(idx === "" || !confirm("この質問と全員の回答を削除しますか？")) return;
-    questions.splice(idx, 1);
-    set(dbRef, questions);
+window.deleteQuestion = (idx) => {
+    if(confirm("この質問を完全に削除しますか？")) {
+        questions.splice(idx, 1);
+        set(dbRef, questions);
+    }
 };
 </script>
 </body>
