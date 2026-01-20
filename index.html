@@ -3,79 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自陣に質問しようサイト</title>
+    <title>四季送り自陣に質問するサイト</title>
     <style>
-        :root { --accent-color: #333; --sumi: #333; --bg: #fcfcfc; }
-        body { font-family: "Yu Mincho", serif; background: var(--bg); color: #222; margin: 0; padding: 20px; line-height: 1.8; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .section-card { background: #fff; padding: 25px; margin-bottom: 25px; border: 1px solid #e0e0e0; position: relative; }
-        .section-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--sumi); }
-        h3 { font-size: 0.95rem; margin-bottom: 15px; border-left: 2px solid #ccc; padding-left: 10px; }
-        input[type="text"], select { width: 100%; padding: 8px 0; border: none; border-bottom: 1px solid #ccc; font-family: inherit; outline: none; background: transparent; box-sizing: border-box; }
-        button { padding: 8px 12px; cursor: pointer; font-size: 0.75rem; background: #fff; border: 1px solid #222; border-radius: 2px; transition: 0.3s; margin: 2px; }
-        button:hover { background: #222; color: #fff; }
-        .btn-submit { width: 100%; background: #222; color: white; border:none; padding: 15px; font-size: 1.1em; margin-top:15px; }
-        .chart-frame { background: #fff; padding: 15px; margin: 30px auto; width: fit-content; border: 8px solid var(--accent-color); transition: border-color 0.4s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        canvas { background: #fff; display: block; max-width: 100%; }
-        input[type="range"] { -webkit-appearance: none; width: 100%; height: 1px; background: #ddd; margin: 25px 0; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #fff; border: 1px solid #222; border-radius: 50%; cursor: pointer; }
-        .ans-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #ccc; font-size: 0.9rem; }
-        .danger-btn { color: #d93025; border-color: #d93025; }
-        .danger-btn:hover { background: #d93025; color: #fff; }
+        :root { --main: #222; --sub: #f0f0f0; }
+        body { font-family: "Yu Mincho", serif; background: #fafafa; color: var(--main); margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* 管理・回答エリア（固定） */
+        .sticky-panel { background: #fff; border: 2px solid var(--main); padding: 20px; margin-bottom: 40px; position: sticky; top: 10px; z-index: 100; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 600px) { .panel-grid { grid-template-columns: 1fr; } }
+        
+        h2, h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; font-size: 1.1rem; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; margin-bottom: 10px; box-sizing: border-box; }
+        
+        button { cursor: pointer; padding: 10px; border: 1px solid var(--main); background: #fff; transition: 0.2s; }
+        button:hover { background: var(--main); color: #fff; }
+        .btn-main { background: var(--main); color: #fff; width: 100%; font-weight: bold; }
+        
+        /* チャート一覧エリア */
+        .chart-list-title { text-align: center; border-top: 3px double #333; padding-top: 40px; margin-top: 40px; letter-spacing: 0.5em; }
+        .q-card { background: #fff; border: 1px solid #ddd; padding: 20px; margin-bottom: 50px; text-align: center; }
+        .chart-container { position: relative; width: 500px; height: 500px; margin: 20px auto; background: #fff; border: 5px solid var(--border-color, #333); }
+        @media (max-width: 550px) { .chart-container { width: 320px; height: 320px; } }
+        canvas { width: 100%; height: 100%; }
+
+        /* 画像アップロード関連 */
+        .img-preview { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; display: block; margin: 10px 0; }
+        .danger { color: #d93025; border-color: #d93025; font-size: 0.7rem; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align:center; font-weight:normal; letter-spacing:0.3em;">四季送り自陣に質問するサイト</h1>
-    
-<h5>不具合他要望あれば編集追記いたします!!</h5>
-    
-    <div class="section-card">
-        <h3>質問の管理</h3>
-        <input id="qTitle" value="お酒は？">
-        <label style="font-size:0.7rem;">フレームの色：</label>
-        <input type="color" id="fColor" value="#333333" style="width:100%; height:30px;">
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <input id="xL" value="嫌い"> <input id="xR" value="好き">
-        </div>
-        <div style="display:flex; gap:10px;">
-            <input id="yB" value="弱い"> <input id="yT" value="強い">
-        </div>
-        <div style="margin-top:15px; display: flex; flex-wrap: wrap; gap: 5px;">
-            <button id="addQ" style="flex: 1;">新規質問を追加</button>
-            <button id="updateQ" style="flex: 1;">選択中の質問を更新</button>
-            <button id="deleteQ" class="danger-btn" style="flex: 1;">質問を消去</button>
+    <h1 style="text-align:center;">質問管理</h1>
+
+    <div class="sticky-panel">
+        <div class="panel-grid">
+            <div>
+                <h3>1. 新しい質問を作る</h3>
+                <input id="qTitle" placeholder="例：お酒は好き？">
+                <div style="display:flex; gap:5px;">
+                    <input id="xL" placeholder="左（嫌い）" style="flex:1">
+                    <input id="xR" placeholder="右（好き）" style="flex:1">
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <input id="yB" placeholder="下（弱い）" style="flex:1">
+                    <input id="yT" placeholder="上（強い）" style="flex:1">
+                </div>
+                <input type="color" id="fColor" value="#333333" title="フレームの色">
+                <button id="addQ" class="btn-main">この質問を追加して公開</button>
+            </div>
+
+            <div>
+                <h3>2. 選んで回答する</h3>
+                <select id="qSelect"></select>
+                <div style="display:flex; gap:10px; align-items: center;">
+                    <input id="uName" placeholder="自分の名前" style="flex:2">
+                    <input type="color" id="uColor" value="#666666" style="flex:1" title="アイコン色">
+                </div>
+                
+                <label style="font-size:0.7rem;">画像を使う(丸く切り抜かれます):</label>
+                <input type="file" id="uImg" accept="image/*">
+                <img id="preview" class="img-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                
+                <div style="font-size:0.8rem; background:#f9f9f9; padding:10px; border:1px solid #eee;">
+                    X軸: <input type="range" id="valX" min="1" max="100" value="50">
+                    Y軸: <input type="range" id="valY" min="1" max="100" value="50">
+                    ｻｲｽﾞ: <input type="range" id="valSize" min="20" max="80" value="50">
+                </div>
+                <button id="sendAns" class="btn-main" style="margin-top:10px;">チャートに反映</button>
+                <button id="delQ" class="danger">選択中の質問自体を消す</button>
+            </div>
         </div>
     </div>
 
-    <div class="section-card">
-        <label>表示中の質問を選択：</label>
-        <select id="qSelect"></select>
-    </div>
-
-    <div class="section-card">
-        <h3 id="formTitle">回答する</h3>
-        <div style="display:flex; gap:15px;">
-            <input id="uName" placeholder="お名前" style="flex:2">
-            <input type="color" id="uColor" value="#666666" style="flex:1; height:35px;">
-        </div>
-        <div style="margin-top:20px; background:#fafafa; padding:15px;">
-            <p id="xlb" style="text-align:center; font-size:0.8rem; font-weight:bold; margin:0;"></p>
-            <input type="range" min="1" max="20" id="valX">
-            <p id="ylb" style="text-align:center; font-size:0.8rem; font-weight:bold; margin:0;"></p>
-            <input type="range" min="1" max="20" id="valY">
-            <button id="sendAns" class="btn-submit">回答を送信/上書き</button>
-            <button id="cancelEdit" style="display:none; width:100%; margin-top:5px; border-color:#ccc; color:#888;">編集をキャンセル</button>
-        </div>
-    </div>
-
-    <div class="chart-frame"><canvas id="chart" width="400" height="400"></canvas></div>
-
-    <div class="section-card">
-        <h3>回答一覧</h3>
-        <div id="ansList"></div>
-    </div>
+    <h2 class="chart-list-title">CHARTS</h2>
+    <div id="chartList"></div>
 </div>
 
 <script type="module">
@@ -83,224 +87,161 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDceh-nvP9lIcKjjo5GdnpYGRZOOws5U7Q",
-  authDomain: "shikiokuri-jijin.firebaseapp.com",
-  databaseURL: "https://shikiokuri-jijin-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "shikiokuri-jijin",
-  storageBucket: "shikiokuri-jijin.firebasestorage.app",
-  messagingSenderId: "661663755417",
-  appId: "1:661663755417:web:547998312085895e825c08"
+    apiKey: "AIzaSyDceh-nvP9lIcKjjo5GdnpYGRZOOws5U7Q",
+    authDomain: "shikiokuri-jijin.firebaseapp.com",
+    databaseURL: "https://shikiokuri-jijin-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "shikiokuri-jijin",
+    storageBucket: "shikiokuri-jijin.firebasestorage.app",
+    messagingSenderId: "661663755417",
+    appId: "1:661663755417:web:547998312085895e825c08"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const dbRef = ref(db, 'shiki_v3');
+const dbRef = ref(db, 'shiki_v4'); // 互換性のためにバージョンを上げる
 
 let questions = [];
-let curIdx = 0;
-let editingAnsIdx = null;
-const ctx = document.getElementById("chart").getContext("2d");
+let userImageData = null;
+
+// 画像の処理
+document.getElementById('uImg').onchange = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        userImageData = event.target.result; // Base64
+        document.getElementById('preview').src = userImageData;
+    };
+    reader.readAsDataURL(file);
+};
 
 onValue(dbRef, (snapshot) => {
-    const data = snapshot.val();
-    questions = data || [];
-    renderUI();
+    questions = snapshot.val() || [];
+    updateUI();
 });
 
-function renderUI() {
+function updateUI() {
     const sel = document.getElementById("qSelect");
-    const lastVal = sel.value;
-    sel.innerHTML = "";
+    const container = document.getElementById("chartList");
+    const curSel = sel.value;
     
-    if (questions.length === 0) {
-        ctx.clearRect(0,0,400,400);
-        document.getElementById("ansList").innerHTML = "質問がありません。追加してください。";
-        return;
-    }
+    sel.innerHTML = "";
+    container.innerHTML = "";
 
     questions.forEach((q, i) => {
+        // セレクトボックス更新
         const opt = document.createElement("option");
         opt.value = i; opt.text = q.title;
         sel.appendChild(opt);
-    });
 
-    if (lastVal !== "" && questions[lastVal]) {
-        sel.value = lastVal;
-    } else {
-        sel.value = 0;
-    }
-    curIdx = Number(sel.value);
-    draw();
-    renderList();
-}
-
-function draw() {
-    if (!questions[curIdx]) return;
-    const q = questions[curIdx];
-    
-    document.documentElement.style.setProperty('--accent-color', q.frameColor);
-    document.getElementById("xlb").innerText = (q.xL || "") + " ↔ " + (q.xR || "");
-    document.getElementById("ylb").innerText = (q.yB || "") + " ↔ " + (q.yT || "");
-
-    ctx.clearRect(0,0,400,400);
-    
-    // 軸の描画
-    ctx.strokeStyle = "#ddd"; 
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(50, 200); ctx.lineTo(350, 200); // 横軸
-    ctx.moveTo(200, 50); ctx.lineTo(200, 350); // 縦軸
-    ctx.stroke();
-
-    // --- ここがラベル追記箇所 ---
-    ctx.fillStyle = "#888"; // ラベルの色
-    ctx.font = "bold 12px serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    // 四方のラベル（軸の外側に配置）
-    ctx.fillText(q.xL || "左端", 25, 200);  // 左
-    ctx.fillText(q.xR || "右端", 375, 200); // 右
-    ctx.fillText(q.yT || "上端", 200, 25);  // 上
-    ctx.fillText(q.yB || "下端", 200, 375); // 下
-    // --------------------------
-
-    // 回答データの描画
-    (q.answers || []).forEach(a => {
-        const px = 50 + (a.x - 1) * (300 / 19);
-        const py = 50 + (21 - a.y) * (300 / 19);
-        ctx.fillStyle = a.color;
-        ctx.beginPath();
-        ctx.arc(px, py, 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "#222";
-        ctx.font = "10px sans-serif";
-        ctx.fillText(a.name, px, py - 12);
-    });
-
-    // 中央の質問タイトル
-    const titleText = q.title || "";
-    const tw = ctx.measureText(titleText).width;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillRect(200 - (tw / 2) - 10, 188, tw + 20, 24);
-    ctx.fillStyle = "#222";
-    ctx.font = "bold 15px serif";
-    ctx.fillText(titleText, 200, 200);
-}
-
-function renderList() {
-    const list = document.getElementById("ansList");
-    list.innerHTML = "";
-    if (!questions[curIdx] || !questions[curIdx].answers || questions[curIdx].answers.length === 0) {
-        list.innerHTML = "まだ回答がありません。";
-        return;
-    }
-    questions[curIdx].answers.forEach((a, i) => {
-        const div = document.createElement("div");
-        div.className = "ans-item";
-        div.innerHTML = `<span><b style="color:${a.color}">●</b> ${a.name}</span>
-            <div>
-                <button onclick="window.editAns(${i})">編集</button>
-                <button onclick="window.deleteAns(${i})" class="danger-btn">消去</button>
+        // チャートカード作成
+        const card = document.createElement("div");
+        card.className = "q-card";
+        card.innerHTML = `<h3>${q.title}</h3>
+            <div class="chart-container" style="--border-color: ${q.frameColor}">
+                <canvas id="canvas-${i}" width="500" height="500"></canvas>
             </div>`;
-        list.appendChild(div);
+        container.appendChild(card);
+        drawChart(i);
     });
+    if(questions[curSel]) sel.value = curSel;
 }
 
-document.getElementById("addQ").onclick = () => {
-    const newQ = {
-        title: document.getElementById("qTitle").value,
-        frameColor: document.getElementById("fColor").value,
-        xL: document.getElementById("xL").value, xR: document.getElementById("xR").value,
-        yB: document.getElementById("yB").value, yT: document.getElementById("yT").value,
-        answers: []
-    };
-    questions.push(newQ);
-    set(dbRef, questions);
-};
-
-document.getElementById("updateQ").onclick = () => {
-    if (questions.length === 0) return;
-    questions[curIdx].title = document.getElementById("qTitle").value;
-    questions[curIdx].frameColor = document.getElementById("fColor").value;
-    questions[curIdx].xL = document.getElementById("xL").value;
-    questions[curIdx].xR = document.getElementById("xR").value;
-    questions[curIdx].yB = document.getElementById("yB").value;
-    questions[curIdx].yT = document.getElementById("yT").value;
-    set(dbRef, questions);
-    alert("更新しました");
-};
-
-document.getElementById("deleteQ").onclick = () => {
-    if (questions.length === 0) return;
-    if (!confirm(`質問を削除しますか？`)) return;
-    questions.splice(curIdx, 1);
-    set(dbRef, questions);
-};
-
-document.getElementById("sendAns").onclick = () => {
-    const name = document.getElementById("uName").value.trim();
-    if (!name || questions.length === 0) return alert("名前を入力してください");
-    if (!questions[curIdx].answers) questions[curIdx].answers = [];
+async function drawChart(idx) {
+    const q = questions[idx];
+    const canvas = document.getElementById(`canvas-${idx}`);
+    if(!canvas) return;
+    const ctx = canvas.getContext("2d");
     
-    const newAns = {
-        name, color: document.getElementById("uColor").value,
+    ctx.clearRect(0,0,500,500);
+    
+    // 軸
+    ctx.strokeStyle = "#ccc";
+    ctx.beginPath(); ctx.moveTo(50,250); ctx.lineTo(450,250); ctx.moveTo(250,50); ctx.lineTo(250,450); ctx.stroke();
+    
+    // ラベル
+    ctx.fillStyle = "#999"; ctx.font = "14px serif"; ctx.textAlign="center";
+    ctx.fillText(q.xL, 30, 255); ctx.fillText(q.xR, 470, 255);
+    ctx.fillText(q.yT, 250, 30); ctx.fillText(q.yB, 250, 480);
+
+    if(!q.answers) return;
+
+    for (const a of q.answers) {
+        const px = 50 + (a.x / 100) * 400;
+        const py = 50 + ( (100 - a.y) / 100) * 400;
+        const size = a.size || 50;
+
+        if (a.img) {
+            const img = new Image();
+            img.src = a.img;
+            await new Promise(r => img.onload = r);
+            
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(px, py, size/2, 0, Math.PI*2);
+            ctx.clip();
+            ctx.drawImage(img, px - size/2, py - size/2, size, size);
+            ctx.restore();
+            // 枠
+            ctx.strokeStyle = a.color; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(px, py, size/2, 0, Math.PI*2); ctx.stroke();
+        } else {
+            ctx.fillStyle = a.color;
+            ctx.beginPath(); ctx.arc(px, py, size/4, 0, Math.PI*2); ctx.fill();
+        }
+        
+        ctx.fillStyle = "#222"; ctx.font = "bold 12px sans-serif";
+        ctx.fillText(a.name, px, py + (size/2) + 15);
+    }
+}
+
+// 質問追加
+document.getElementById("addQ").onclick = () => {
+    const title = document.getElementById("qTitle").value;
+    if(!title) return;
+    questions.push({
+        title, frameColor: document.getElementById("fColor").value,
+        xL: document.getElementById("xL").value || "左",
+        xR: document.getElementById("xR").value || "右",
+        yT: document.getElementById("yT").value || "上",
+        yB: document.getElementById("yB").value || "下",
+        answers: []
+    });
+    set(dbRef, questions);
+};
+
+// 回答送信
+document.getElementById("sendAns").onclick = () => {
+    const idx = document.getElementById("qSelect").value;
+    const name = document.getElementById("uName").value;
+    if(!name || idx === "") return alert("名前と質問を選んでください");
+
+    if(!questions[idx].answers) questions[idx].answers = [];
+    
+    // 同名がいれば上書き、いなければ新規
+    const existing = questions[idx].answers.findIndex(a => a.name === name);
+    const data = {
+        name, 
+        color: document.getElementById("uColor").value,
         x: Number(document.getElementById("valX").value),
-        y: Number(document.getElementById("valY").value)
+        y: Number(document.getElementById("valY").value),
+        size: Number(document.getElementById("valSize").value),
+        img: userImageData // 画像データ（なければnull）
     };
 
-    if (editingAnsIdx !== null) {
-        questions[curIdx].answers[editingAnsIdx] = newAns;
-        editingAnsIdx = null;
-        document.getElementById("formTitle").innerText = "回答する";
-        document.getElementById("cancelEdit").style.display = "none";
-    } else {
-        questions[curIdx].answers.push(newAns);
-    }
+    if(existing > -1) questions[idx].answers[existing] = data;
+    else questions[idx].answers.push(data);
+
     set(dbRef, questions);
 };
 
-window.editAns = (i) => {
-    const a = questions[curIdx].answers[i];
-    document.getElementById("uName").value = a.name;
-    document.getElementById("uColor").value = a.color;
-    document.getElementById("valX").value = a.x;
-    document.getElementById("valY").value = a.y;
-    editingAnsIdx = i;
-    document.getElementById("formTitle").innerText = "回答を修正中...";
-    document.getElementById("cancelEdit").style.display = "block";
-    window.scrollTo(0, 400);
-};
-
-window.deleteAns = (i) => {
-    if (!confirm("削除しますか？")) return;
-    questions[curIdx].answers.splice(i, 1);
+// 質問削除
+document.getElementById("delQ").onclick = () => {
+    const idx = document.getElementById("qSelect").value;
+    if(idx === "" || !confirm("この質問と全員の回答を削除しますか？")) return;
+    questions.splice(idx, 1);
     set(dbRef, questions);
-};
-
-document.getElementById("cancelEdit").onclick = () => {
-    editingAnsIdx = null;
-    document.getElementById("formTitle").innerText = "回答する";
-    document.getElementById("cancelEdit").style.display = "none";
-};
-
-document.getElementById("qSelect").onchange = (e) => {
-    curIdx = Number(e.target.value);
-    const q = questions[curIdx];
-    document.getElementById("qTitle").value = q.title;
-    document.getElementById("fColor").value = q.frameColor;
-    document.getElementById("xL").value = q.xL;
-    document.getElementById("xR").value = q.xR;
-    document.getElementById("yB").value = q.yB;
-    document.getElementById("yT").value = q.yT;
-    draw();
-    renderList();
 };
 </script>
 </body>
 </html>
-
