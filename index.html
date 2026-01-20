@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>四季送り自陣 リアルタイム質問板</title>
     <style>
-        :root { --main: #222; --bg: #fcfcfc; --edit-bg: #fff9e6; }
+        :root { --main: #222; --bg: #fcfcfc; --edit-q: #fff9e6; --edit-a: #eef7ff; }
         body { font-family: "Yu Mincho", serif; background: var(--bg); color: var(--main); margin: 0; padding: 20px; line-height: 1.6; }
         .container { max-width: 700px; margin: 0 auto; }
         
-        /* 管理パネル */
+        /* 質問管理パネル */
         .admin-panel { background: #fff; border: 2px solid var(--main); padding: 20px; margin-bottom: 50px; transition: 0.3s; }
-        .admin-panel.editing { background: var(--edit-bg); border-color: #d4a017; }
+        .admin-panel.editing { background: var(--edit-q); border-color: #d4a017; }
         .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
         input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; box-sizing: border-box; font-family: inherit; }
         
         button { cursor: pointer; border: 1px solid var(--main); background: #fff; transition: 0.2s; font-family: inherit; }
         button:hover { background: var(--main); color: #fff; }
-        .btn-add { width: 100%; padding: 15px; font-weight: bold; font-size: 1rem; }
         
         /* 質問カード */
         .q-card { background: #fff; border: 1px solid #ddd; padding: 25px; margin-bottom: 60px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
@@ -29,19 +28,26 @@
         canvas { width: 100%; height: 100%; display: block; }
         
         /* 回答フォーム */
-        .ans-form { background: #f9f9f9; padding: 20px; border-top: 1px solid #eee; }
+        .ans-form { background: #f9f9f9; padding: 20px; border-top: 1px solid #eee; transition: 0.3s; }
+        .ans-form.editing-ans { background: var(--edit-a); border: 2px solid #007bff; }
         .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         
-        /* スライダー（中央目盛り付き） */
+        /* スライダー */
         .range-box { text-align: center; font-size: 0.8rem; font-weight: bold; margin: 15px 0; position: relative; }
         .slider-container { position: relative; width: 100%; padding: 10px 0; }
         .mid-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #bbb; z-index: 1; pointer-events: none; }
         input[type="range"] { position: relative; z-index: 2; cursor: ew-resize; }
 
         .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; gap: 10px; }
-        .edit-label { font-size: 0.75rem; color: #d4a017; font-weight: bold; margin-bottom: 5px; display: none; }
+        .mode-label { font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; display: none; }
+        .q-edit-msg { color: #d4a017; }
+        .a-edit-msg { color: #007bff; }
         .danger-text { color: #cc0000; cursor: pointer; font-size: 0.7rem; text-decoration: underline; }
         
+        /* 回答者リスト */
+        .member-list { margin-top: 15px; border-top: 1px dotted #ccc; padding-top: 10px; }
+        .member-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 4px 0; }
+
         #tooltip { position: absolute; display: none; background: rgba(0,0,0,0.85); color: #fff; padding: 10px; border-radius: 5px; font-size: 0.85rem; z-index: 1000; pointer-events: none; max-width: 220px; }
     </style>
 </head>
@@ -53,21 +59,19 @@
     <h1 style="text-align:center; letter-spacing: 0.2em;">四季送り自陣 質問板</h1>
 
     <div class="admin-panel" id="adminPanel">
-        <div id="editLabel" class="edit-label">【質問編集モード】</div>
+        <div id="qEditLabel" class="mode-label q-edit-msg">【質問内容を編集中...】</div>
         <h3 id="panelTitle">新しい質問を掲示する</h3>
-        <input id="new_title" placeholder="質問内容（例：お酒の強さと好き度）" style="margin-bottom:15px;">
-        <div class="input-row">
-            <input id="new_xL" placeholder="左（例：嫌い）">
-            <input id="new_xR" placeholder="右（例：好き）">
+        <input id="new_title" placeholder="質問内容（例：お酒の強さと好き度）">
+        <div class="input-row" style="margin-top:10px;">
+            <input id="new_xL" placeholder="左の項目"> <input id="new_xR" placeholder="右の項目">
         </div>
         <div class="input-row">
-            <input id="new_yB" placeholder="下（例：弱い）">
-            <input id="new_yT" placeholder="上（例：強い）">
+            <input id="new_yB" placeholder="下の項目"> <input id="new_yT" placeholder="上の項目">
         </div>
         <input type="color" id="new_fColor" value="#333333" style="height:40px;">
-        <div style="display:flex; gap:10px;">
-            <button id="addQBtn" class="btn-add" style="margin-top:10px; flex:3;">質問カードを追加する</button>
-            <button id="cancelEditBtn" style="margin-top:10px; flex:1; display:none; border-color:#ccc;">中止</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button id="addQBtn" style="flex:3; padding:15px; font-weight:bold; background:#222; color:#fff;">質問カードを公開</button>
+            <button id="cancelQEditBtn" style="flex:1; display:none;">中止</button>
         </div>
     </div>
 
@@ -112,7 +116,8 @@ function renderCards() {
             <div class="chart-box" style="--f-color: ${q.frameColor}" onclick="checkClick(event, ${qIdx})">
                 <canvas id="can-${qIdx}" width="450" height="450"></canvas>
             </div>
-            <div class="ans-form">
+            <div class="ans-form" id="ansForm-${qIdx}">
+                <div id="aEditLabel-${qIdx}" class="mode-label a-edit-msg">【回答を修正中...】</div>
                 <div class="ans-grid">
                     <input id="name-${qIdx}" placeholder="お名前">
                     <input type="file" onchange="handleFile(this, ${qIdx})" accept="image/*">
@@ -126,19 +131,40 @@ function renderCards() {
                     <div class="slider-container"><div class="mid-line"></div><input type="range" id="y-${qIdx}" min="1" max="100" value="50"></div>
                 </div>
 
-                <button onclick="sendAnswer(${qIdx})" style="width:100%; padding:12px; background:#222; color:#fff; font-weight:bold;">この質問に回答を反映</button>
-                
+                <button id="sendBtn-${qIdx}" onclick="sendAnswer(${qIdx})" style="width:100%; padding:12px; background:#222; color:#fff; font-weight:bold;">回答を反映する</button>
+                <button id="cancelAnswBtn-${qIdx}" onclick="cancelAnswerEdit(${qIdx})" style="width:100%; margin-top:5px; display:none;">修正をやめる</button>
+
+                <div class="member-list" id="list-${qIdx}"></div>
+
                 <div class="btn-row">
-                    <span class="danger-text" onclick="deleteMyAnswer(${qIdx})">自分の回答を削除</span>
-                    <div>
-                        <button onclick="prepareEditQ(${qIdx})" style="font-size:0.7rem; padding:4px 8px;">質問内容を編集</button>
-                        <span class="danger-text" style="margin-left:10px;" onclick="deleteQuestion(${qIdx})">質問を削除</span>
-                    </div>
+                    <span class="danger-text" onclick="deleteQuestion(${qIdx})">質問カードを削除</span>
+                    <button onclick="prepareEditQ(${qIdx})" style="font-size:0.7rem;">質問内容を編集</button>
                 </div>
             </div>
         `;
         container.appendChild(card);
+        renderMemberList(qIdx);
         drawChart(qIdx);
+    });
+}
+
+function renderMemberList(qIdx) {
+    const listDiv = document.getElementById(`list-${qIdx}`);
+    const answers = questions[qIdx].answers || [];
+    if(answers.length === 0) return;
+    
+    listDiv.innerHTML = "<strong>回答者一覧（編集・削除）:</strong>";
+    answers.forEach((a, aIdx) => {
+        const item = document.createElement("div");
+        item.className = "member-item";
+        item.innerHTML = `
+            <span>● ${a.name}</span>
+            <div>
+                <button onclick="prepareEditAns(${qIdx}, ${aIdx})" style="font-size:0.7rem; padding:2px 5px;">編集</button>
+                <button onclick="deleteTargetAnswer(${qIdx}, ${aIdx})" style="font-size:0.7rem; padding:2px 5px; color:red;">消す</button>
+            </div>
+        `;
+        listDiv.appendChild(item);
     });
 }
 
@@ -196,11 +222,40 @@ window.checkClick = (e, qIdx) => {
     } else { tooltip.style.display = "none"; }
 };
 
+// 回答の編集準備
+window.prepareEditAns = (qIdx, aIdx) => {
+    const a = questions[qIdx].answers[aIdx];
+    document.getElementById(`name-${qIdx}`).value = a.name;
+    document.getElementById(`comm-${qIdx}`).value = a.comment || "";
+    document.getElementById(`x-${qIdx}`).value = a.x;
+    document.getElementById(`y-${qIdx}`).value = a.y;
+    
+    const form = document.getElementById(`ansForm-${qIdx}`);
+    form.classList.add("editing-ans");
+    document.getElementById(`aEditLabel-${qIdx}`).style.display = "block";
+    document.getElementById(`aEditLabel-${qIdx}`).innerText = `【${a.name}さんの回答を修正中】`;
+    document.getElementById(`sendBtn-${qIdx}`).innerText = "修正を確定する";
+    document.getElementById(`cancelAnswBtn-${qIdx}`).style.display = "block";
+    
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.cancelAnswerEdit = (qIdx) => {
+    const form = document.getElementById(`ansForm-${qIdx}`);
+    form.classList.remove("editing-ans");
+    document.getElementById(`aEditLabel-${qIdx}`).style.display = "none";
+    document.getElementById(`sendBtn-${qIdx}`).innerText = "回答を反映する";
+    document.getElementById(`cancelAnswBtn-${qIdx}`).style.display = "none";
+    document.getElementById(`name-${qIdx}`).value = "";
+    document.getElementById(`comm-${qIdx}`).value = "";
+};
+
 window.sendAnswer = (idx) => {
     const name = document.getElementById(`name-${idx}`).value.trim();
     if(!name) return alert("名前を入力してください");
     if(!questions[idx].answers) questions[idx].answers = [];
     const existingIdx = questions[idx].answers.findIndex(a => a.name === name);
+    
     const data = {
         name,
         x: Number(document.getElementById(`x-${idx}`).value),
@@ -210,11 +265,19 @@ window.sendAnswer = (idx) => {
     };
     if(existingIdx > -1) questions[idx].answers[existingIdx] = data;
     else questions[idx].answers.push(data);
+    
     set(dbRef, questions);
     localImageData[idx] = null;
+    cancelAnswerEdit(idx);
 };
 
-// 質問の編集準備
+window.deleteTargetAnswer = (qIdx, aIdx) => {
+    if(confirm("この回答を消去しますか？")) {
+        questions[qIdx].answers.splice(aIdx, 1);
+        set(dbRef, questions);
+    }
+};
+
 window.prepareEditQ = (idx) => {
     currentEditingQIdx = idx;
     const q = questions[idx];
@@ -224,23 +287,21 @@ window.prepareEditQ = (idx) => {
     document.getElementById("new_yB").value = q.yB;
     document.getElementById("new_yT").value = q.yT;
     document.getElementById("new_fColor").value = q.frameColor;
-    
     document.getElementById("adminPanel").classList.add("editing");
     document.getElementById("panelTitle").innerText = "質問内容を修正する";
     document.getElementById("addQBtn").innerText = "修正を保存する";
-    document.getElementById("editLabel").style.display = "block";
-    document.getElementById("cancelEditBtn").style.display = "block";
+    document.getElementById("qEditLabel").style.display = "block";
+    document.getElementById("cancelQEditBtn").style.display = "block";
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// 編集キャンセル
-document.getElementById("cancelEditBtn").onclick = () => {
+document.getElementById("cancelQEditBtn").onclick = () => {
     currentEditingQIdx = null;
     document.getElementById("adminPanel").classList.remove("editing");
     document.getElementById("panelTitle").innerText = "新しい質問を掲示する";
-    document.getElementById("addQBtn").innerText = "質問カードを追加する";
-    document.getElementById("editLabel").style.display = "none";
-    document.getElementById("cancelEditBtn").style.display = "none";
+    document.getElementById("addQBtn").innerText = "質問カードを公開";
+    document.getElementById("qEditLabel").style.display = "none";
+    document.getElementById("cancelQEditBtn").style.display = "none";
     document.getElementById("new_title").value = "";
 };
 
@@ -253,23 +314,10 @@ document.getElementById("addQBtn").onclick = () => {
         yT: document.getElementById("new_yT").value || "上", yB: document.getElementById("new_yB").value || "下",
         answers: currentEditingQIdx !== null ? (questions[currentEditingQIdx].answers || []) : []
     };
-
-    if(currentEditingQIdx !== null) {
-        questions[currentEditingQIdx] = qData;
-        currentEditingQIdx = null;
-        document.getElementById("cancelEditBtn").click();
-    } else {
-        questions.push(qData);
-    }
+    if(currentEditingQIdx !== null) { questions[currentEditingQIdx] = qData; currentEditingQIdx = null; document.getElementById("cancelQEditBtn").click(); }
+    else { questions.push(qData); }
     set(dbRef, questions);
     document.getElementById("new_title").value = "";
-};
-
-window.deleteMyAnswer = (idx) => {
-    const name = document.getElementById(`name-${idx}`).value;
-    if(!name) return alert("名前を入れてください");
-    questions[idx].answers = (questions[idx].answers || []).filter(a => a.name !== name);
-    set(dbRef, questions);
 };
 
 window.deleteQuestion = (idx) => { if(confirm("この質問カードを消去しますか？")) { questions.splice(idx, 1); set(dbRef, questions); } };
