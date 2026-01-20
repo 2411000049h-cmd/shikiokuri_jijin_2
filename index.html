@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四季送り自陣 リアルタイム質問板</title>
+    <title>四季送り自陣に質問しようサイト</title>
     <style>
         :root { --main: #222; --bg: #fcfcfc; }
         body { font-family: "Yu Mincho", serif; background: var(--bg); color: var(--main); margin: 0; padding: 20px; line-height: 1.6; }
@@ -33,11 +33,11 @@
 <div id="tooltip"></div>
 
 <div class="container">
-    <h1 style="text-align:center; letter-spacing: 0.2em;">四季送り自陣 質問板</h1>
+    <h1 style="text-align:center; letter-spacing: 0.2em;">四季送り自陣に質問しようサイト</h1>
 
     <div class="admin-panel">
-        <h3>新しい質問を掲示する</h3>
-        <input id="new_title" placeholder="質問内容（例：お酒の強さと好き度）" style="margin-bottom:15px;">
+        <h3>新しい質問を追加</h3>
+        <input id="new_title" placeholder="質問内容（例：お酒は？(強いor弱い,好きor嫌い)）" style="margin-bottom:15px;">
         <div class="input-row">
             <input id="new_xL" placeholder="左（嫌い）">
             <input id="new_xR" placeholder="右（好き）">
@@ -47,7 +47,7 @@
             <input id="new_yT" placeholder="上（強い）">
         </div>
         <input type="color" id="new_fColor" value="#333333" style="height:40px;">
-        <button id="addQBtn" class="btn-add" style="margin-top:10px;">質問カードを追加する</button>
+        <button id="addQBtn" class="btn-add" style="margin-top:10px;">質問を追加</button>
     </div>
 
     <div id="qContainer"></div>
@@ -133,7 +133,7 @@ async function drawChart(idx) {
     for(const a of q.answers) {
         const px = 50 + (a.x / 100) * 350;
         const py = 50 + ((100 - a.y) / 100) * 350;
-        const size = 50; // 少し小さくした50px
+        const size = 50;
 
         if(a.img) {
             const img = new Image(); img.src = a.img;
@@ -149,7 +149,6 @@ async function drawChart(idx) {
     }
 }
 
-// クリック判定（コメント表示）
 window.checkClick = (e, qIdx) => {
     const rect = e.target.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 450;
@@ -175,7 +174,7 @@ window.checkClick = (e, qIdx) => {
 
 window.sendAnswer = (idx) => {
     const name = document.getElementById(`name-${idx}`).value.trim();
-    if(!name) return alert("名前を入れてね");
+    if(!name) return alert("名前を入力してください");
     if(!questions[idx].answers) questions[idx].answers = [];
     const existingIdx = questions[idx].answers.findIndex(a => a.name === name);
     
@@ -220,3 +219,4 @@ window.deleteQuestion = (idx) => { if(confirm("質問を消しますか？")) { 
 </script>
 </body>
 </html>
+
