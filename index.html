@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>四季送り自陣 リアルタイム質問板</title>
+    <title>四季送り自陣に質問しようサイト</title>
     <style>
         :root { --main: #222; --bg: #fcfcfc; --edit-q: #fff9e6; --edit-a: #eef7ff; }
         body { font-family: "Yu Mincho", serif; background: var(--bg); color: var(--main); margin: 0; padding: 20px; line-height: 1.6; }
@@ -56,12 +56,12 @@
 <div id="tooltip"></div>
 
 <div class="container">
-    <h1 style="text-align:center; letter-spacing: 0.2em;">四季送り自陣 質問板</h1>
+    <h1 style="text-align:center; letter-spacing: 0.2em;">四季送り自陣に質問しようサイト</h1>
 
     <div class="admin-panel" id="adminPanel">
         <div id="qEditLabel" class="mode-label q-edit-msg">【質問内容を編集中...】</div>
-        <h3 id="panelTitle">新しい質問を掲示する</h3>
-        <input id="new_title" placeholder="質問内容（例：お酒の強さと好き度）">
+        <h3 id="panelTitle">新しい質問を作成する</h3>
+        <input id="new_title" placeholder="質問内容（例：お酒は?好きor嫌い　強いor弱い）">
         <div class="input-row" style="margin-top:10px;">
             <input id="new_xL" placeholder="左の項目"> <input id="new_xR" placeholder="右の項目">
         </div>
@@ -70,7 +70,7 @@
         </div>
         <input type="color" id="new_fColor" value="#333333" style="height:40px;">
         <div style="display:flex; gap:10px; margin-top:10px;">
-            <button id="addQBtn" style="flex:3; padding:15px; font-weight:bold; background:#222; color:#fff;">質問カードを公開</button>
+            <button id="addQBtn" style="flex:3; padding:15px; font-weight:bold; background:#222; color:#fff;">質問を公開</button>
             <button id="cancelQEditBtn" style="flex:1; display:none;">中止</button>
         </div>
     </div>
@@ -137,7 +137,7 @@ function renderCards() {
                 <div class="member-list" id="list-${qIdx}"></div>
 
                 <div class="btn-row">
-                    <span class="danger-text" onclick="deleteQuestion(${qIdx})">質問カードを削除</span>
+                    <span class="danger-text" onclick="deleteQuestion(${qIdx})">質問を削除</span>
                     <button onclick="prepareEditQ(${qIdx})" style="font-size:0.7rem;">質問内容を編集</button>
                 </div>
             </div>
@@ -298,8 +298,8 @@ window.prepareEditQ = (idx) => {
 document.getElementById("cancelQEditBtn").onclick = () => {
     currentEditingQIdx = null;
     document.getElementById("adminPanel").classList.remove("editing");
-    document.getElementById("panelTitle").innerText = "新しい質問を掲示する";
-    document.getElementById("addQBtn").innerText = "質問カードを公開";
+    document.getElementById("panelTitle").innerText = "新しい質問を作成";
+    document.getElementById("addQBtn").innerText = "質問を公開";
     document.getElementById("qEditLabel").style.display = "none";
     document.getElementById("cancelQEditBtn").style.display = "none";
     document.getElementById("new_title").value = "";
@@ -320,7 +320,8 @@ document.getElementById("addQBtn").onclick = () => {
     document.getElementById("new_title").value = "";
 };
 
-window.deleteQuestion = (idx) => { if(confirm("この質問カードを消去しますか？")) { questions.splice(idx, 1); set(dbRef, questions); } };
+window.deleteQuestion = (idx) => { if(confirm("この質問を消去しますか？")) { questions.splice(idx, 1); set(dbRef, questions); } };
 </script>
 </body>
 </html>
+
